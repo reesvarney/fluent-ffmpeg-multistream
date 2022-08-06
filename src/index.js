@@ -5,18 +5,23 @@ const path = require('path');
 var counter = 0
 class UnixStream {
   constructor (stream, onSocket) {
-    const socketPath = path.resolve('/tmp/', (++counter), '.sock');
-    this.url = 'unix:' + socketPath
+    let sockpath = './' + (++counter) + '.sock'
+    this.url = 'unix:' + sockpath
+    if(process.platform === "win32") {
+      sockpath = path.join('\\\\?\\pipe', './' + (++counter) + '.sock')
+      this.url = sockpath
+    }
+    
 
     try {
-      fs.statSync(socketPath)
-      fs.unlinkSync(socketPath)
+      fs.statSync(sockpath)
+      fs.unlinkSync(sockpath)
     } catch (err) {}
     const server = net.createServer(onSocket)
     stream.on('finish', () => {
       server.close()
     })
-    server.listen(socketPath)
+    server.listen(sockpath)
   }
 }
 
